@@ -135,17 +135,15 @@ const usersApi = withRateLimit(new pipedrive.UsersApi(apiClient));
 const server = new McpServer({
   name: "pipedrive-mcp-server",
   version: "1.0.2",
-  capabilities: {
-    resources: {},
-    tools: {},
-    prompts: {}
-  }
 });
+
+const tool = (server as any).tool.bind(server);
+
 
 // === TOOLS ===
 
 // Get all users (for finding owner IDs)
-server.tool(
+tool(
   "get-users",
   "Get all users/owners from Pipedrive to identify owner IDs for filtering deals",
   {},
@@ -183,7 +181,7 @@ server.tool(
 );
 
 // Get deals with flexible filtering options
-server.tool(
+tool(
   "get-deals",
   "Get deals from Pipedrive with flexible filtering options including search by title, date range, owner, stage, status, and more. Use 'get-users' tool first to find owner IDs.",
   {
@@ -198,16 +196,16 @@ server.tool(
     limit: z.number().optional().describe("Maximum number of deals to return (default: 500)")
   },
   async ({
-    searchTitle,
-    daysBack = 365,
-    ownerId,
-    stageId,
-    status = 'open',
-    pipelineId,
-    minValue,
-    maxValue,
-    limit = 500
-  }) => {
+  searchTitle,
+  daysBack = 365,
+  ownerId,
+  stageId,
+  status = 'open',
+  pipelineId,
+  minValue,
+  maxValue,
+  limit = 500
+}: any) => {
     try {
       let filteredDeals: any[] = [];
 
@@ -356,13 +354,13 @@ server.tool(
 );
 
 // Get deal by ID
-server.tool(
+tool(
   "get-deal",
   "Get a specific deal by ID including custom fields",
   {
     dealId: z.number().describe("Pipedrive deal ID")
   },
-  async ({ dealId }) => {
+  async ({ dealId }: any) => {
     try {
       // @ts-ignore - Bypass incorrect TypeScript definition, API expects just the ID
       const response = await dealsApi.getDeal(dealId);
@@ -386,14 +384,14 @@ server.tool(
 );
 
 // Get deal notes and custom booking details
-server.tool(
+tool(
   "get-deal-notes",
   "Get detailed notes and custom booking details for a specific deal",
   {
     dealId: z.number().describe("Pipedrive deal ID"),
     limit: z.number().optional().describe("Maximum number of notes to return (default: 20)")
   },
-  async ({ dealId, limit = 20 }) => {
+  async ({ dealId, limit = 20 }: any) => {
     try {
       const result: any = {
         deal_id: dealId,
@@ -454,13 +452,13 @@ server.tool(
 );
 
 // Search deals
-server.tool(
+tool(
   "search-deals",
   "Search deals by term",
   {
     term: z.string().describe("Search term for deals")
   },
-  async ({ term }) => {
+  async ({ term }: any) => {
     try {
       // @ts-ignore - Bypass incorrect TypeScript definition
       const response = await dealsApi.searchDeals(term);
@@ -484,7 +482,7 @@ server.tool(
 );
 
 // Get all persons
-server.tool(
+tool(
   "get-persons",
   "Get all persons from Pipedrive including custom fields",
   {},
@@ -511,13 +509,13 @@ server.tool(
 );
 
 // Get person by ID
-server.tool(
+tool(
   "get-person",
   "Get a specific person by ID including custom fields",
   {
     personId: z.number().describe("Pipedrive person ID")
   },
-  async ({ personId }) => {
+  async ({ personId }: any) => {
     try {
       // @ts-ignore - Bypass incorrect TypeScript definition
       const response = await personsApi.getPerson(personId);
@@ -541,13 +539,13 @@ server.tool(
 );
 
 // Search persons
-server.tool(
+tool(
   "search-persons",
   "Search persons by term",
   {
     term: z.string().describe("Search term for persons")
   },
-  async ({ term }) => {
+  async ({ term }: any) => {
     try {
       // @ts-ignore - Bypass incorrect TypeScript definition
       const response = await personsApi.searchPersons(term);
@@ -571,7 +569,7 @@ server.tool(
 );
 
 // Get all organizations
-server.tool(
+tool(
   "get-organizations",
   "Get all organizations from Pipedrive including custom fields",
   {},
@@ -598,13 +596,13 @@ server.tool(
 );
 
 // Get organization by ID
-server.tool(
+tool(
   "get-organization",
   "Get a specific organization by ID including custom fields",
   {
     organizationId: z.number().describe("Pipedrive organization ID")
   },
-  async ({ organizationId }) => {
+  async ({ organizationId }: any) => {
     try {
       // @ts-ignore - Bypass incorrect TypeScript definition
       const response = await organizationsApi.getOrganization(organizationId);
@@ -628,13 +626,13 @@ server.tool(
 );
 
 // Search organizations
-server.tool(
+tool(
   "search-organizations",
   "Search organizations by term",
   {
     term: z.string().describe("Search term for organizations")
   },
-  async ({ term }) => {
+  async ({ term }: any) => {
     try {
       // @ts-ignore - API method exists but TypeScript definition is wrong
       const response = await (organizationsApi as any).searchOrganization({ term });
@@ -658,7 +656,7 @@ server.tool(
 );
 
 // Get all pipelines
-server.tool(
+tool(
   "get-pipelines",
   "Get all pipelines from Pipedrive",
   {},
@@ -685,13 +683,13 @@ server.tool(
 );
 
 // Get pipeline by ID
-server.tool(
+tool(
   "get-pipeline",
   "Get a specific pipeline by ID",
   {
     pipelineId: z.number().describe("Pipedrive pipeline ID")
   },
-  async ({ pipelineId }) => {
+  async ({ pipelineId }: any) => {
     try {
       // @ts-ignore - Bypass incorrect TypeScript definition
       const response = await pipelinesApi.getPipeline(pipelineId);
@@ -715,7 +713,7 @@ server.tool(
 );
 
 // Get all stages
-server.tool(
+tool(
   "get-stages",
   "Get all stages from Pipedrive",
   {},
@@ -767,13 +765,13 @@ server.tool(
 );
 
 // Search leads
-server.tool(
+tool(
   "search-leads",
   "Search leads by term",
   {
     term: z.string().describe("Search term for leads")
   },
-  async ({ term }) => {
+  async ({ term }: any) => {
     try {
       // @ts-ignore - Bypass incorrect TypeScript definition
       const response = await leadsApi.searchLeads(term);
@@ -797,14 +795,14 @@ server.tool(
 );
 
 // Generic search across item types
-server.tool(
+tool(
   "search-all",
   "Search across all item types (deals, persons, organizations, etc.)",
   {
     term: z.string().describe("Search term"),
     itemTypes: z.string().optional().describe("Comma-separated list of item types to search (deal,person,organization,product,file,activity,lead)")
   },
-  async ({ term, itemTypes }) => {
+  async ({ term, itemTypes }: any) => {
     try {
       const itemType = itemTypes; // Just rename the parameter
       const response = await itemSearchApi.searchItem({ 
