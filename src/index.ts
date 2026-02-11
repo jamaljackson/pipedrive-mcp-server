@@ -13,6 +13,7 @@ interface ErrorWithMessage {
   message: string;
 }
 
+
 function isErrorWithMessage(error: unknown): error is ErrorWithMessage {
   return (
     typeof error === 'object' &&
@@ -28,6 +29,26 @@ function getErrorMessage(error: unknown): string {
   }
   return String(error);
 }
+
+
+const BASE = `https://${process.env.PIPEDRIVE_DOMAIN}/api/v1`;
+
+async function pdGet(path: string, query: Record<string, any> = {}) {
+  const url = new URL(`${BASE}${path}`);
+  url.searchParams.set("api_token", process.env.PIPEDRIVE_API_TOKEN!);
+  for (const [k, v] of Object.entries(query)) {
+    if (v === undefined || v === null) continue;
+    url.searchParams.set(k, String(v));
+  }
+
+  const res = await fetch(url.toString());
+  const json = await res.json();
+  if (!res.ok || json?.success === false) {
+    throw new Error(json?.error || `Pipedrive request failed: ${res.status}`);
+  }
+  return json.data;
+}
+
 
 // Load environment variables
 dotenv.config();
@@ -141,6 +162,58 @@ const tool = (server as any).tool.bind(server);
 
 
 // === TOOLS ===
+
+tool(
+  "list-mail-threads",
+  "List email threads from Pipedrive Mailbox (Email Sync).",
+  {
+    folder: z.enum(["inbox", "sent", "archive", "drafts"]).default("inbox"),
+    start: z.number().optional(),
+    limit: z.number().optional(),
+  },
+  async ({ folder = "inbox", start = 0, limit = 50 }: any) => {
+    const data = await pdGet("/mailbox/mailThreads", { folder, start, limit });
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+tool(
+  "get-mail-thread",
+  "Get a specific mail thread by ID.",
+  { threadId: z.number() },
+  async ({ threadId }: any) => {
+    const data = await pdGet(`/mailbox/mailThreads/${threadId}`);
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+
+tool(
+  "list-mail-thread-messages",
+  "List mail messages in a mail thread (metadata/snippets).",
+  { threadId: z.number() },
+  async ({ threadId }: any) => {
+    const data = await pdGet(`/mailbox/mailThreads/${threadId}/mailMessages`);
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+
+tool(
+  "get-mail-message",
+  "Get a mail message by ID. Set includeBody=true to fetch full HTML body.",
+  {
+    messageId: z.number(),
+    includeBody: z.boolean().optional(),
+  },
+  async ({ messageId, includeBody = true }: any) => {
+    const data = await pdGet(`/mailbox/mailMessages/${messageId}`, {
+      include_body: includeBody ? 1 : 0,
+    });
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
 
 // Get all users (for finding owner IDs)
 tool(
